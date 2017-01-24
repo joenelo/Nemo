@@ -29,6 +29,9 @@ function preload() {
 
 function create() {
     // Create the map.
+    game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+    game.input.onDown.add(gofull, this);
+
     map = game.add.tilemap('level1');
     map.addTilesetImage('platformer_tiles', 'tiles');
     layer = map.createLayer('layer1');
@@ -115,10 +118,11 @@ function update() {
             nemo.body.velocity.x = 0;
         }
 
-        if (cursors.up.justDown) {
+        if (cursors.up.justDown && cursors.up.isDown) {
         if (nemo.body.onFloor() || nemo.body.touching.down) {
             nemo.body.velocity.y = -275;
             nemo.animations.play('jump', 20, true);
+
             //jumpsound.play();
         }
     }
@@ -140,6 +144,18 @@ function update() {
 }
 
 
+function gofull() {
+
+    if (game.scale.isFullScreen)
+    {
+        game.scale.stopFullScreen();
+    }
+    else
+    {
+        game.scale.startFullScreen(false);
+    }
+
+}
 
 
 
