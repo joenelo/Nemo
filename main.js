@@ -19,6 +19,11 @@ var enemies;
 // The player.
 var nemo;
 var lizard;
+var mole;
+var bee;
+var crab;
+var fish;
+
 
 
 
@@ -53,7 +58,7 @@ function create() {
 
     // Create Nemo
     nemo = game.add.sprite(32, 3085, 'nemo');
-    game.physics.enable(nemo, Phaser.Physics.ARCADE);
+    game.physics.enable(nemo, lizard);
     game.physics.arcade.gravity.y = 700;
     nemo.body.collideWorldBounds = true;
     nemo.body.allowGravity = true;
@@ -75,11 +80,11 @@ function create() {
     nemo.body.setSize(30, 20, 0, 10);
 
 
-    // enemies = game.add.group();
+     enemies = game.add.group();
     //
     // //Lizard  sprite creation
-    // lizard = game.add.sprite(300, 3000, 'lizard');
-    // lizard.scale.setTo(0.47, 0.47);
+     lizard = game.add.sprite(248, 3000, 'lizard');
+     lizard.scale.setTo(0.75, 0.75);
     // enemies.add(lizard, Phaser.Physics.ARCADE);
     //
     // // Lizard sprite physics
