@@ -1,9 +1,3 @@
-const LIZARD = 'lizard';
-const MOLE = 'mole';
-const BEE = 'bee';
-const CRAB = 'crab';
-const FISH = 'fish';
-const DRAGON = 'dragon';
 
 // Create my variables for...
 
@@ -13,16 +7,16 @@ var layer;
 //var background;
 var cursors;
 var hitButton;
-var enemies;
+
 
 
 // The player.
 var nemo;
 var lizard;
 var mole;
-var bee;
-var crab;
-var fish;
+var mole1;
+
+var jumpSound;
 
 
 
@@ -35,9 +29,12 @@ function preload() {
     game.load.tilemap('level1', 'assets/nemo.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.image('tiles', 'assets/platformer_tiles.png');
     game.load.spritesheet('nemo', 'assets/nemo1.png', 48, 30);
-    game.load.spritesheet('LIZARD', 'assets/lizard.png', 21, 29);
+    game.load.spritesheet('lizard', 'assets/lizard.png', 35, 21);
+    game.load.spritesheet('mole', 'assets/mole.png', 30, 27);
+    game.load.spritesheet('mole1', 'assets/mole.png', 30, 27);
     //game.load.image('background', 'assets/nemoBackground.png');
 
+    game.load.audio('jump', 'sounds/Jump.wav');
 
 }
 
@@ -52,18 +49,18 @@ function create() {
     layer.resizeWorld();
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
+    jumpSound = game.add.audio('jump');
 
     // Create Background
     //game.add.tileSprite(0, 0, 432, 512, "background");
 
     // Create Nemo
     nemo = game.add.sprite(32, 3085, 'nemo');
-    game.physics.enable(nemo, lizard);
+    game.physics.enable(nemo, lizard, mole);
     game.physics.arcade.gravity.y = 700;
     nemo.body.collideWorldBounds = true;
     nemo.body.allowGravity = true;
     nemo.body.bounce.y = 0;
-    nemo.body.linearDamping = 1;
     game.camera.follow(nemo);
 
     nemo.anchor.x = 0.5;
@@ -80,23 +77,25 @@ function create() {
     nemo.body.setSize(30, 20, 0, 10);
 
 
-     enemies = game.add.group();
+
     //
     // //Lizard  sprite creation
-     lizard = game.add.sprite(248, 3000, 'lizard');
-     lizard.scale.setTo(0.75, 0.75);
-    // enemies.add(lizard, Phaser.Physics.ARCADE);
-    //
-    // // Lizard sprite physics
-    // lizard.body.bounce.y = 0;
-    // lizard.body.linearDamping = 1;
-    // lizard.body.collideWorldBounds = true;
-    //
-    // lizard.animations.add('stand', [0, 1, 2], 6, true);
-    // lizard.play('stand');
-    // lizard.body.velocity.x = 0;
+    lizard = game.add.sprite(55, 2971, 'lizard');
+    lizard.animations.add('stand', [1, 4, 3, 5, 6], 2, true);
+    lizard.play('stand');
+
 
     // Mole
+    mole = game.add.sprite(275, 3075, 'mole');
+    mole.anchor.x = 0.5;
+    mole.anchor.y = 0.5;
+    mole.scale.x *=-1;
+    mole.animations.add('stand', [0, 1, 1, 2, 0], 2, true);
+    mole.play('stand');
+
+
+    //Mole1
+    mole1 = game.add.sprite(255, 2995, 'mole1');
 
 
     // Bee
@@ -118,13 +117,25 @@ function create() {
 function update() {
 
     game.physics.arcade.collide(nemo, layer);
+    game.physics.arcade.collide(nemo, lizard);
     game.physics.arcade.collide(lizard, layer);
     // background.tilePosition.x = 0.5;
 
    // Make Nemo move
     nemo.body.velocity.x = 0;
 
-    if (cursors.left.isDown) {
+    if (hitButton.isPressed || hitButton.isDown) {
+            nemo.animations.play('hit', 10, false);
+        }
+
+    else if (cursors.up.justDown && nemo.body.onFloor()) {
+        nemo.body.velocity.y = -275;
+        nemo.animations.play('jump');
+
+        jumpSound.play();
+    }
+
+    else if (cursors.left.isDown) {
         if (nemo.direction != 'left') {
             nemo.scale.x *= -1;
             nemo.direction = 'left';
@@ -157,25 +168,8 @@ function update() {
             nemo.body.velocity.x = 0;
         }
 
-        if (cursors.up.justDown && cursors.up.isDown) {
-        if (nemo.body.onFloor() || nemo.body.touching.down) {
-            nemo.body.velocity.y = -275;
-            nemo.animations.play('jump', 20, true);
 
-            //jumpsound.play();
-        }
-    }
-    // if (hitButton.justDown) {
-    //         nemo.animations.play('hit', 10, false);
-    //     }
-    //  else if (hitButton.isDown) {
-    //     if (nemo.animations.currentAnim.isPlaying) {
-    //     }
-    // }
-    // if (!cursors.isDown && !(currentAnim = 'hit' && currentAnim = isPlaying && currentAnim.isPlaying = 'jump')) {
-    //     nemo.animations.stop();
-    //
-    // }
+
 
     map.forEach(function (through) {
         if (through) { through.collideDown = false;} }, game, 0, 0, map.width, map.height, layer);
