@@ -98,8 +98,11 @@ function create() {
     game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
     game.input.onDown.add(gofull, this);
 
-    //game.add.tileSprite(0, 0, game.width, game.height, [0, 1, 2], 'background');
-    background = game.add.sprite(game.width, game.height, 'background');
+    background = game.add.sprite(0, 2700, 'background');
+    background.animations.add('stars', [0, 1, 2, 1], 10, true);
+    background.play('stars');
+    background.fixedToCamera = true;
+    background.cameraOffset.setTo(0, 0);
 
 
     map = game.add.tilemap('level1');
@@ -126,14 +129,14 @@ function create() {
     nemo.anchor.y = 0.5;
 
     // Make Nemo move
-    nemo.animations.add('left', [3, 4, 5], 10, true);
+    nemo.animations.add('walk', [3, 4, 5], 10, true);
     nemo.animations.add('wait', [0], 10, true);
     nemo.animations.add('jump', [2], 10, true);
     nemo.animations.add('duck', [1], 10, true);
-    nemo.animations.add('hit', [11, 13, 14, 15, 16, 15, 14, 0], 20, true);
+    nemo.animations.add('hit', [11, 13, 14, 15, 16, 15, 14, 0], 20, false);
     nemo.body.fixedRotation = true;
     nemo.direction = 'right';
-    nemo.body.setSize(30, 20, 0, 10);
+    nemo.body.setSize(20, 20, 14, 10);
 
     // Mole
     mole = game.add.sprite(263, 3061, 'mole');
@@ -241,32 +244,32 @@ function create() {
 
     // Bee
     bee = game.add.sprite(294, 758, 'bee');
-    bee.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
+    bee.animations.add('stand', [0, 2, 1, 3, 4, 5], 2, true);
     bee.play('stand');
 
     // Bee1
     bee1 = game.add.sprite(84, 726, 'bee1');
-    bee1.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
+    bee1.animations.add('stand', [0, 2, 1, 3, 4, 5], 2, true);
     bee1.play('stand');
 
     // Bee2
     bee2 = game.add.sprite(31, 662, 'bee2');
-    bee2.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
+    bee2.animations.add('stand', [0, 2, 1, 3, 4, 5], 2, true);
     bee2.play('stand');
 
     // Bee3
     bee3 = game.add.sprite(275, 566, 'bee3');
-    bee3.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
+    bee3.animations.add('stand', [0, 2, 1, 3, 4, 5], 2, true);
     bee3.play('stand');
 
     // Bee4
     bee4 = game.add.sprite(27, 422, 'bee4');
-    bee4.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
+    bee4.animations.add('stand', [0, 2, 1, 3, 4, 5], 2, true);
     bee4.play('stand');
 
     // Bee5
     bee5 = game.add.sprite(250, 342, 'bee5');
-    bee5.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
+    bee5.animations.add('stand', [0, 2, 1, 2, 1, 2, 1, 3, 4, 5], 2, true);
     bee5.play('stand');
 
 
@@ -276,14 +279,7 @@ function create() {
     gorilla.animations.add('stand', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 , 11, 12 , 13, 14, 15 , 16, 17, 18, 19], 2, true);
     gorilla.play('stand');
 
-
-
-
-
-
-
-
-
+    // Controls
     cursors = game.input.keyboard.createCursorKeys();
     hitButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
@@ -292,62 +288,68 @@ function create() {
 
 }
 
+function isAttacking(nemo) {
+    return (nemo.animations.currentAnim.name === "hit" && nemo.animations.currentAnim.isPlaying);
+}
+
 function update() {
 
     game.physics.arcade.collide(nemo, layer);
     game.physics.arcade.collide(nemo, lizard);
     game.physics.arcade.collide(lizard, layer);
-    // background.tilePosition.x = 0.5;
 
    // Make Nemo move
     nemo.body.velocity.x = 0;
+    var nextAnimation = undefined;
+    var nextXVelocity = undefined;
+    var nextYVelocity = undefined;
 
-    if (hitButton.justDown) {
-            nemo.animations.play('hit', 10, false);
-        }
-
-    else if (cursors.up.justDown && nemo.body.onFloor()) {
-        nemo.body.velocity.y = -275;
-        nemo.animations.play('jump');
-
-        jumpSound.play();
+    if (cursors.up.justDown && nemo.body.onFloor()) {
+        nextYVelocity = -275;
+        nextAnimation = 'jump';
     }
-
     else if (cursors.left.isDown) {
         if (nemo.direction != 'left') {
             nemo.scale.x *= -1;
             nemo.direction = 'left';
         }
-        if (nemo.body.velocity.x == 0 ||
-            (nemo.animations.currentAnim.name != 'left' && (nemo.body.onFloor() || nemo.body.touching.down))) {
-            nemo.animations.play('left', 10, true);
+        if (nemo.animations.currentAnim.name != 'walk' && (nemo.body.onFloor() || nemo.body.touching.down )) {
+            nextAnimation = 'walk';
         }
-
-        nemo.body.velocity.x -= 125;
-
-
+        nextXVelocity = -125;
     } else if (cursors.right.isDown) {
         if (nemo.direction != 'right') {
             nemo.scale.x *= -1;
             nemo.direction = 'right';
         }
-        if (nemo.body.velocity.x == 0 ||
-            (nemo.animations.currentAnim.name != 'left' && (nemo.body.onFloor() || nemo.body.touching.down))) {
-            nemo.animations.play('left', 10, true);
+        if (nemo.animations.currentAnim.name != 'walk' && (nemo.body.onFloor() || nemo.body.touching.down)) {
+            nextAnimation = 'walk';
         }
-        nemo.body.velocity.x += 125;
+        nextXVelocity = 125;
+    } else if (nemo.body.onFloor() || nemo.body.touching.down){
+        nextAnimation = 'wait';
+    }
+    if (hitButton.justDown) {
+        nextAnimation = 'hit';
+        nextXVelocity = 0;
+    }
+    if (cursors.down.isDown && (nemo.body.onFloor() || nemo.body.touching.down)){
+        nextAnimation = 'duck';
+        nextXVelocity = 0;
+    }
 
-     } else {
-        nemo.animations.play('wait',1 ,true);
-        }
-
-        if (cursors.down.isDown){
-            nemo.animations.play('duck', 1, true);
-            nemo.body.velocity.x = 0;
-        }
-
-
-
+    if (nextXVelocity) {
+        nemo.body.velocity.x = nextXVelocity;
+    }
+    if (nextYVelocity) {
+        nemo.body.velocity.y = nextYVelocity;
+        jumpSound.play();
+    }
+    if (nextAnimation && !isAttacking(nemo)) {
+        nemo.animations.play(nextAnimation);
+    } else if (isAttacking(nemo)) {
+        nemo.body.velocity.x = 0;
+    }
 
     map.forEach(function (through) {
         if (through) { through.collideDown = false;} }, game, 0, 0, map.width, map.height, layer);
