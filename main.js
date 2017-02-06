@@ -4,7 +4,7 @@
 // The map.
 var map;
 var layer;
-//var background;
+var background;
 var cursors;
 var hitButton;
 
@@ -99,7 +99,7 @@ function create() {
     game.input.onDown.add(gofull, this);
 
     //game.add.tileSprite(0, 0, game.width, game.height, [0, 1, 2], 'background');
-    //background = fixedToCamera = true;
+    background = game.add.sprite(game.width, game.height, 'background');
 
 
     map = game.add.tilemap('level1');
