@@ -8,6 +8,9 @@ var background;
 var cursors;
 var hitButton;
 
+var moleBubble;
+var firingTimer;
+
 // The player.
 var nemo;
 
@@ -99,7 +102,7 @@ function create() {
     game.input.onDown.add(gofull, this);
 
     background = game.add.sprite(0, 2700, 'background');
-    background.animations.add('stars', [0, 1, 2, 1], 10, true);
+    background.animations.add('stars', [0, 1, 2, 1], 7, true);
     background.play('stars');
     background.fixedToCamera = true;
     background.cameraOffset.setTo(0, 0);
@@ -113,8 +116,6 @@ function create() {
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
     jumpSound = game.add.audio('jump');
-
-
 
     // Create Nemo
     nemo = game.add.sprite(32, 3085, 'nemo');
@@ -134,6 +135,7 @@ function create() {
     nemo.animations.add('jump', [2], 10, true);
     nemo.animations.add('duck', [1], 10, true);
     nemo.animations.add('hit', [11, 13, 14, 15, 16, 15, 14, 0], 20, false);
+    nemo.animations.add('die', [9, 10, 20, 21],true);
     nemo.body.fixedRotation = true;
     nemo.direction = 'right';
     nemo.body.setSize(20, 20, 14, 10);
@@ -273,6 +275,16 @@ function create() {
     bee5.play('stand');
 
 
+    // The enemy's attack
+    moleBubble = game.add.group();
+    moleBubble.enableBody = true;
+    moleBubble.physicsBodyType = Phaser.Physics.ARCADE;
+    moleBubble.createMultiple(30, 'enemybubble');
+    moleBubble.setAll('anchor.x', 1);
+    moleBubble.setAll('anchor.y', 0.5);
+    moleBubble.setAll('outOfBoundsKill', true);
+    moleBubble.setAll('checkWorldBounds', true);
+
     //GORILLA
 
     gorilla = game.add.sprite(41, 192, 'gorilla');
@@ -351,11 +363,80 @@ function update() {
         nemo.body.velocity.x = 0;
     }
 
+    // Jump through the branches, only collide on top!
     map.forEach(function (through) {
         if (through) { through.collideDown = false;} }, game, 0, 0, map.width, map.height, layer);
 
+
+    //creating timer for enemy attack
+    if (game.time.now > firingTimer)
+    {
+        enemyFires();
+    }
+
+    game.physics.arcade.overlap(moleBubble, nemo, enemyHitsPlayer, null, this);
 }
 
+function enemyHitsPlayer (player,bubble) {
+
+    bubble.kill();
+
+    live = lives.getFirstAlive();
+
+    if (live)
+    {
+        live.kill();
+    }
+
+    //  And create an explosion :)
+    var nemoDie = nemoDies.getFirstExists(false);
+    nemoDie.reset(player.body.x, player.body.y);
+    nemoDie.play('die', 30, false, true);
+
+    // When the player dies
+    if (lives.countLiving() < 1)
+    {
+        nemo.kill();
+        enemyBubbles.callAll('kill');
+
+        stateText.text=" GAME OVER \n Click to restart";
+        stateText.visible = true;
+
+        //the "click to restart" handler
+        game.input.onTap.addOnce(restart,this);
+    }
+
+}
+
+function enemyFires () {
+
+    //  Grab the first bullet we can from the pool
+    moleBubble = enemyBubbles.getFirstExists(false);
+
+    livingEnemies.length=0;
+
+    enemies.forEachAlive(function(enemy){
+
+        // put every living enemy in an array
+        livingEnemies.push(enemy);
+    });
+
+
+    if (enemybubble && livingEnemies.length > 0)
+    {
+
+        var random=game.rnd.integerInRange(0,livingEnemies.length-1);
+
+        // randomly select one of them
+        var shooter=livingEnemies[random];
+        // And fire the bullet from this enemy
+        enemyBullet.reset(shooter.body.x, shooter.body.y);
+
+        game.physics.arcade.moveToObject(enemyBullet,nemo,120);
+        firingTimer = game.time.now + 2000;
+    }
+
+}
 
 function gofull() {
 
