@@ -1,5 +1,5 @@
-
-// Create my variables for...
+var GameState = {
+    // Create my variables for...
 
 // The map.
 var map;
@@ -9,7 +9,6 @@ var cursors;
 var hitButton;
 
 var moleBubble;
-var firingTimer;
 
 // The player.
 var nemo;
@@ -53,48 +52,6 @@ var jumpSound;
 
 
 
-
-
-var game = new Phaser.Game(320, 500, Phaser.AUTO, '', { preload: preload, create: create , update: update});
-
-
-function preload() {
-    game.load.tilemap('level1', 'assets/nemo.json', null, Phaser.Tilemap.TILED_JSON);
-    game.load.image('tiles', 'assets/platformer_tiles.png');
-    game.load.spritesheet('background', 'assets/nemoBackground1.png', 320, 500);
-    game.load.spritesheet('nemo', 'assets/nemo1.png', 48, 30);
-    game.load.spritesheet('lizard', 'assets/leftLizard.png', 35, 21);
-    game.load.spritesheet('lizard1', 'assets/lizard.png', 35, 21);
-    game.load.spritesheet('lizard2', 'assets/leftLizard.png', 35, 21);
-    game.load.spritesheet('lizard3', 'assets/lizard.png', 35, 21);
-    game.load.spritesheet('mole', 'assets/leftMole.png', 30, 27);
-    game.load.spritesheet('mole1', 'assets/leftMole.png', 30, 27);
-    game.load.spritesheet('mole2', 'assets/mole.png', 30, 27);
-    game.load.spritesheet('crusty', 'assets/leftCrusty.png', 28, 23);
-    game.load.spritesheet('crusty1', 'assets/Crusty.png', 28, 23);
-    game.load.spritesheet('crusty2', 'assets/Crusty.png', 28, 23);
-    game.load.spritesheet('crusty3', 'assets/leftCrusty.png', 28, 23);
-    game.load.spritesheet('crusty4', 'assets/Crusty.png', 28, 23);
-    game.load.spritesheet('crusty5', 'assets/leftCrusty.png', 28, 23);
-    game.load.spritesheet('crusty6', 'assets/Crusty.png', 28, 23);
-    game.load.spritesheet('dragon', 'assets/leftDragon.png', 25, 30);
-    game.load.spritesheet('dragon1', 'assets/Dragon.png', 25, 30);
-    game.load.spritesheet('dragon2', 'assets/Dragon.png', 25, 30);
-    game.load.spritesheet('dragon3', 'assets/leftDragon.png', 25, 30);
-    game.load.spritesheet('dragon4', 'assets/Dragon.png', 25, 30);
-    game.load.spritesheet('dragon5', 'assets/Dragon.png', 25, 30);
-    game.load.spritesheet('bee', 'assets/leftBee.png', 25, 26);
-    game.load.spritesheet('bee1', 'assets/Bee.png', 25, 26);
-    game.load.spritesheet('bee2', 'assets/Bee.png', 25, 26);
-    game.load.spritesheet('bee3', 'assets/leftBee.png', 25, 26);
-    game.load.spritesheet('bee4', 'assets/Bee.png', 25, 26);
-    game.load.spritesheet('bee5', 'assets/leftBee.png', 25, 26);
-    game.load.spritesheet('gorilla', 'assets/Gorilla.png', 52, 63);
-    //game.load.image('background', 'assets/nemoBackground.png');
-
-    game.load.audio('jump', 'sounds/Jump.wav');
-
-}
 
 function create() {
     // Create the map.
@@ -184,12 +141,12 @@ function create() {
     crusty.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
     crusty.play('stand');
 
-  //Crusty1
+    //Crusty1
     crusty1 = game.add.sprite(65, 2203, 'crusty1');
     crusty1.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
     crusty1.play('stand');
 
-  //Crusty2
+    //Crusty2
     crusty2 = game.add.sprite(49, 2106, 'crusty2');
     crusty2.animations.add('stand', [0, 1, 2, 3, 4, 5], 2, true);
     crusty2.play('stand');
@@ -310,7 +267,7 @@ function update() {
     game.physics.arcade.collide(nemo, lizard);
     game.physics.arcade.collide(lizard, layer);
 
-   // Make Nemo move
+    // Make Nemo move
     nemo.body.velocity.x = 0;
     var nextAnimation = undefined;
     var nextXVelocity = undefined;
@@ -368,75 +325,8 @@ function update() {
         if (through) { through.collideDown = false;} }, game, 0, 0, map.width, map.height, layer);
 
 
-    //creating timer for enemy attack
-    if (game.time.now > firingTimer)
-    {
-        enemyFires();
-    }
-
-    game.physics.arcade.overlap(moleBubble, nemo, enemyHitsPlayer, null, this);
 }
 
-function enemyHitsPlayer (player,bubble) {
-
-    bubble.kill();
-
-    live = lives.getFirstAlive();
-
-    if (live)
-    {
-        live.kill();
-    }
-
-    //  And create an explosion :)
-    var nemoDie = nemoDies.getFirstExists(false);
-    nemoDie.reset(player.body.x, player.body.y);
-    nemoDie.play('die', 30, false, true);
-
-    // When the player dies
-    if (lives.countLiving() < 1)
-    {
-        nemo.kill();
-        enemyBubbles.callAll('kill');
-
-        stateText.text=" GAME OVER \n Click to restart";
-        stateText.visible = true;
-
-        //the "click to restart" handler
-        game.input.onTap.addOnce(restart,this);
-    }
-
-}
-
-function enemyFires () {
-
-    //  Grab the first bullet we can from the pool
-    moleBubble = enemyBubbles.getFirstExists(false);
-
-    livingEnemies.length=0;
-
-    enemies.forEachAlive(function(enemy){
-
-        // put every living enemy in an array
-        livingEnemies.push(enemy);
-    });
-
-
-    if (enemybubble && livingEnemies.length > 0)
-    {
-
-        var random=game.rnd.integerInRange(0,livingEnemies.length-1);
-
-        // randomly select one of them
-        var shooter=livingEnemies[random];
-        // And fire the bullet from this enemy
-        enemyBullet.reset(shooter.body.x, shooter.body.y);
-
-        game.physics.arcade.moveToObject(enemyBullet,nemo,120);
-        firingTimer = game.time.now + 2000;
-    }
-
-}
 
 function gofull() {
 
@@ -449,7 +339,10 @@ function gofull() {
         game.scale.startFullScreen(false);
     }
 
+},
+
+create: function() {
+
 }
 
-
-
+};
