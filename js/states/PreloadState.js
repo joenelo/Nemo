@@ -34,7 +34,7 @@ var PreloadState = {
         game.load.spritesheet('bee5', 'assets/leftBee.png', 25, 26);
         game.load.spritesheet('gorilla', 'assets/Gorilla.png', 52, 63);
 
-        game.load.spritesheet('moleBubble', 'assets/bubble.png', 30, 27);
+        game.load.spritesheet('moleBubble', 'assets/enemyBubble.png', 30, 27);
 
 
         game.load.audio('jump', 'sounds/Jump.wav');
