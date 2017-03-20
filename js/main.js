@@ -22,6 +22,9 @@ const Animations = {
     },
     Stinger: {
         STING: 'sting'
+    },
+    Fireball: {
+        EXHALE: 'exhale'
     }
 };
 
@@ -38,6 +41,8 @@ var enemyBubbles;
 var enemyBubble;
 var stinger;
 var stingers;
+var fireball;
+var fireballs;
 
 // The player.
 var nemo;
@@ -46,12 +51,14 @@ var nemoBubble;
 
 // Enemies
 var enemies;
+var dragons;
+var bees;
 var shootingFrames = {
     mole: { shootingFrame: 2, yOffset: 15 },
-    lizard: { shootingFrame: 3, yOffset: 15 },
-    crusty: { shootingFrame: 2, yOffset: 15 },
-    dragon: { shootingFrame: 0, yOffset: 15 },
-    bee: { shootingFrame: 1, yOffset: 15 }
+    lizard: { shootingFrame: 3, yOffset: 12 },
+    crusty: { shootingFrame: 2, yOffset: 12 },
+    dragon: { shootingFrame: 0, yOffset: 14 },
+    bee: { shootingFrame: 1, yOffset: 20 }
 };
 
 
@@ -135,6 +142,7 @@ function preload() {
     // sprite assets
     game.load.spritesheet('bubble', 'assets/bubble.png', 16, 16);
     game.load.spritesheet('stinger', 'assets/stinger.png', 8, 5);
+    game.load.spritesheet('fireball', 'assets/fireball.png', 21, 11);
 
     game.load.audio('jump', 'sounds/Jump.wav');
 }
@@ -163,7 +171,7 @@ function create() {
     jumpSound = game.add.audio(Animations.Nemo.JUMP);
 
     // Create Nemo
-    nemo = game.add.sprite(200, 300, 'nemo');
+    nemo = game.add.sprite(150, 1350, 'nemo');
     game.physics.enable(nemo);
     game.physics.arcade.gravity.y = 700;
     nemo.body.collideWorldBounds = true;
@@ -186,10 +194,21 @@ function create() {
     nemo.direction = 'right';
     nemo.body.setSize(20, 20, 14, 10);
 
+    //----------------------------------//
+    //-------- Add Enemy groups --------//
+    //----------------------------------//
 
-    // Add Enemies
     enemies = game.add.group();
     enemies.enableBody = true;
+    bees = game.add.group();
+    bees.enableBody = true;
+    dragons = game.add.group();
+    dragons.enableBody = true;
+
+
+    // -----------------------------------------//
+    // ------- Create Individual Enemies -------//
+    // -----------------------------------------//
 
     function addMole(x, y, asset, animationFrames) {
         var mole = game.add.sprite(x, y, asset);
@@ -211,17 +230,17 @@ function create() {
         var lizard = game.add.sprite(x, y, asset);
         lizard.name = LIZARD;
         game.physics.enable(lizard);
-        lizard.animations.add(Animations.Enemy.STAND, animationFrames, 2, true);
+        lizard.animations.add(Animations.Enemy.STAND, animationFrames, 4, true);
         lizard.animations.add(Animations.Enemy.SLEEP, [6, 5], 2, true);
         lizard.play(Animations.Enemy.STAND);
         lizard.body.allowGravity = false;
         lizard.body.immovable = true;
         enemies.add(lizard);
     }
-    addLizard(240, 2715, 'lizard', [1, 4, 3]);
-    addLizard(65, 2603, 'lizard1', [1, 4, 3]);
-    addLizard(195, 2475, 'lizard2', [1, 4, 3]);
-    addLizard(16, 2379, 'lizard3', [1, 4, 3]);
+    addLizard(240, 2715, 'lizard', [ 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 3]);
+    addLizard(65, 2603, 'lizard1', [1, 1, 1, 1, 1, 1, 1, 4, 2, 3]);
+    addLizard(195, 2475, 'lizard2', [1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 3]);
+    addLizard(16, 2379, 'lizard3', [1, 1, 1, 1, 1, 1, 4, 2, 3, 4, 2, 3, 4, 2, 3]);
 
     function addCrusty(x, y, asset, animationFrames) {
         var crusty = game.add.sprite(x, y, asset);
@@ -234,31 +253,31 @@ function create() {
         crusty.body.immovable = true;
         enemies.add(crusty);
     }
-    addCrusty(220, 2250, 'crusty', [0, 1, 2, 3]);
-    addCrusty(65, 2203, 'crusty1', [0, 1, 2, 3]);
-    addCrusty(49, 2106, 'crusty2', [0, 1, 2, 3]);
-    addCrusty(252, 1898, 'crusty3', [0, 1, 2, 3]);
-    addCrusty(32, 1850, 'crusty4', [0, 1, 2, 3]);
-    addCrusty(232, 1802, 'crusty5', [0, 1, 2, 3]);
-    addCrusty(3, 1626, 'crusty6', [0, 1, 2, 3]);
+    addCrusty(220, 2250, 'crusty', [0, 1, 0, 1, 0, 1, 0, 1, 3, 2]);
+    addCrusty(65, 2202, 'crusty1', [0, 1, 0, 1, 1, 3, 2]);
+    addCrusty(49, 2106, 'crusty2', [0, 1, 0, 1, 3, 2]);
+    addCrusty(252, 1898, 'crusty3', [1, 0, 1, 0, 1, 0, 1, 3, 2]);
+    addCrusty(32, 1850, 'crusty4', [1, 0, 1, 0, 1, 0, 1, 0, 1, 3, 2]);
+    addCrusty(232, 1802, 'crusty5', [0, 1, 0, 1, 2, 3]);
+    addCrusty(3, 1626, 'crusty6', [0, 1, 0, 1, 3, 2, 3, 2, 3, 2]);
 
     function addDragon(x, y, asset, animationFrames) {
         var dragon = game.add.sprite(x, y, asset);
         dragon.name = DRAGON;
         game.physics.enable(dragon);
         dragon.animations.add(Animations.Enemy.STAND, animationFrames, 2, true);
-        dragon.animations.add(Animations.Enemy.SLEEP, [3, 4], 2, true);
+        dragon.animations.add(Animations.Enemy.SLEEP, [4, 3], 2, true);
         dragon.play(Animations.Enemy.STAND);
         dragon.body.allowGravity = false;
         dragon.body.immovable = true;
-        enemies.add(dragon);
+        dragons.add(dragon);
     }
-    addDragon(232, 1538, 'dragon', [1, 2, 0]);
-    addDragon(3, 1346, 'dragon1', [1, 2, 0]);
-    addDragon(74, 1234, 'dragon2', [1, 2, 0]);
-    addDragon(252, 1186, 'dragon3', [1, 2, 0]);
-    addDragon(48, 1154, 'dragon4', [1, 2, 0]);
-    addDragon(3, 930, 'dragon5', [1, 2, 0]);
+    addDragon(232, 1538, 'dragon', [2, 1, 2, 1, 2, 1, 2, 0]);
+    addDragon(3, 1346, 'dragon1', [2, 1, 2, 1, 2, 0]);
+    addDragon(74, 1234, 'dragon2', [2, 1, 2, 1, 2, 1, 2, 0, 2, 1, 2, 1, 2, 1, 2, 0, 2, 0]);
+    addDragon(252, 1186, 'dragon3', [2, 1, 2, 1, 2, 1, 2, 0, 2, 1, 2, 1, 2, 1, 2, 0, 2, 0, 2, 0]);
+    addDragon(48, 1154, 'dragon4', [2, 1, 2, 1, 2, 1, 2, 0]);
+    addDragon(3, 930, 'dragon5', [2, 1, 2, 0, 2, 1, 2, 0, 2, 0, 2, 0, 2, 1, 2, 0, 2, 0, 2, 1, 2, 0, 2, 0, 2, 0]);
 
 
     function addBee(x, y, asset, animationFrames) {
@@ -270,17 +289,15 @@ function create() {
         bee.play(Animations.Enemy.STAND);
         bee.body.allowGravity = false;
         bee.body.immovable = true;
-        enemies.add(bee);
+        bees.add(bee);
     }
-    addBee(294, 758, 'bee', [0, 2, 1, 3]);
-    addBee(84, 726, 'bee1', [0, 2, 1, 3]);
-    addBee(31, 662, 'bee2', [0, 2, 1, 3]);
-    addBee(275, 566, 'bee3', [0, 2, 1, 3]);
+    addBee(294, 758, 'bee', [2, 3, 0, 1]);
+    addBee(84, 726, 'bee1', [2, 3, 0, 1, 2, 3, 0, 0, 1, 2, 3, 0, 0, 0, 1]);
+    addBee(31, 662, 'bee2', [3, 0, 1, 2, 3, 0, 2, 3, 0, 1, 0, 1]);
+    addBee(275, 566, 'bee3', [2, 3, 0, 3, 0, 1]);
     addBee(27, 422, 'bee4', [0, 2, 1, 3]);
     addBee(250, 342, 'bee5', [0, 2, 1, 2, 1, 2, 1, 3]);
 
-
-    //GORILLA
 
     gorilla = game.add.sprite(41, 222, 'gorilla');
     game.physics.enable(gorilla);
@@ -292,12 +309,23 @@ function create() {
     gorilla.anchor.y = 0.5;
     gorilla.facing = 'right';
 
-    // Controls
+    // -----------------------------------------//
+    // ------- Turn on Keyboard and Mouse ------//
+    // -----------------------------------------//
     cursors = game.input.keyboard.createCursorKeys();
     hitButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
-    // Set collisions.
+    // -----------------------------------------//
+    // --------- Create Map Collisions ---------//
+    // -----------------------------------------//
+
     map.setCollision([2, 3, 5, 41, 105, 106, 107, 108]);
+
+
+    // -----------------------------------------//
+    // -------- Add Enemy Attack Groups --------//
+    // -----------------------------------------//
+
 
     enemyBubbles = game.add.group();
     game.physics.enable(enemyBubbles, Phaser.Physics.ARCADE);
@@ -308,32 +336,60 @@ function create() {
     stingers = game.add.group();
     game.physics.enable(stingers, Phaser.Physics.ARCADE);
 
+    fireballs = game.add.group();
+    game.physics.enable(fireballs, Phaser.Physics.ARCADE);
 
 
+    // -----------------------------------------//
+    // --------- End of Create Section ---------//
+    // -----------------------------------------//
 }
+
+
+
+// -----------------------------------------------------//
+// --------- Create Interruptions for Controls ---------//
+// -----------------------------------------------------//
+
 
 function canInterruptAnimation(nemo) {
     return !(nemo.animations.currentAnim.name === Animations.Nemo.HIT && nemo.animations.currentAnim.isPlaying)
         && !(nemo.animations.currentAnim.name === Animations.Nemo.DIE && nemo.animations.currentAnim.isPlaying);
 }
 
+
+// -----------------------------------------//
+// ------------ Start of Update  -----------//
+// -----------------------------------------//
+
 function update() {
 
+    // -----------------------------------------//
+    // ----------- Calling functions -----------//
+    // -----------------------------------------//
     gorillaPath();
-
+    enemiesShootBubble();
+    dragonsFireBreath();
     beeStings();
-    //enemiesShootBubble();
+
 
     game.physics.arcade.collide(nemo, layer);
     game.physics.arcade.collide(gorilla, layer);
     game.physics.arcade.collide(nemo, enemies, resolveEnemyCollision, null, this);
     game.physics.arcade.collide(enemyBubbles, nemo, bubbleHitsNemo, null, this);
+    game.physics.arcade.collide(enemyBubbles, nemoBubbles, bubblesCollide, null, this);
     game.physics.arcade.collide(stingers, nemo, beeStingHitsNemo, null, this);
-    game.physics.arcade.collide(nemoBubbles, enemies, enemiesResolveNemoBubbless, null, this);
-    game.physics.arcade.collide(nemoBubbles, gorilla, gorillaResolveNemoBubbless, null, this);
+    game.physics.arcade.collide(fireballs, nemo, fireballHitsNemo, null, this);
+    game.physics.arcade.collide(nemoBubbles, enemies, enemiesResolveNemoBubbles, null, this);
+    game.physics.arcade.collide(nemoBubbles, bees, beesNemoBubbles, null, this);
+    game.physics.arcade.collide(nemoBubbles, dragons, dragonNemoBubbles, null, this);
+    game.physics.arcade.collide(nemoBubbles, gorilla, gorillaResolveNemoBubbles, null, this);
 
 
-   // Make Nemo move
+    // -----------------------------------------//
+    // ------------- Nemo Controls -------------//
+    // -----------------------------------------//
+
     nemo.body.velocity.x = 0;
     var nextAnimation = undefined;
     var nextXVelocity = undefined;
@@ -369,7 +425,10 @@ function update() {
         nextXVelocity = 0;
     }
 
-    // Nemo shooting nemoBubble.
+    // -----------------------------------------//
+    // - Create Nemo's attack in his Movements -//
+    // -----------------------------------------//
+
     if (nemo.animations.currentFrame.index === 15) {
         if (nemo.direction === 'right') {
             nemoBubble = game.add.sprite(nemo.x +18, nemo.y -5, 'bubble');
@@ -389,7 +448,6 @@ function update() {
         nemoBubble.alpha = 0;
         nemoBubbles.add(nemoBubble);
     }
-
 
 
     if (cursors.down.isDown && (nemo.body.onFloor() || nemo.body.touching.down)){
@@ -415,12 +473,17 @@ function update() {
         if (through) { through.collideDown = false;} }, game, 0, 0, map.width, map.height, layer);
 
 }
+// -----------------------------------------//
+// ----------- End of Movements ------------//
+// -----------------------------------------//
+
+
+
 
 function enemiesShootBubble () {
        // if (enemies.animations.currentFrame === 2) {
     enemies.forEach(shouldEnemyShoot, this, true);
     function shouldEnemyShoot(enemy) {
-        // debugger
         if (enemy.name && enemy.animations.currentFrame.index === shootingFrames[enemy.name].shootingFrame) {
             if (!enemy.hasFired) {
                 enemy.hasFired = true;
@@ -434,10 +497,12 @@ function enemiesShootBubble () {
                 else {
                     enemyBubble = game.add.sprite(enemy.x, enemy.y + shootingFrames[enemy.name].yOffset, 'bubble');
                     game.physics.enable(enemyBubble, Phaser.Physics.ARCADE);
+                    enemyBubble.scale.x *= -1;
                     enemyBubble.body.velocity.x = -30;
+
                 }
 
-                enemyBubble.animations.add(Animations.Enemy.FLOAT, [0, 1], 2, true);
+                enemyBubble.animations.add(Animations.Enemy.FLOAT, [0, 1], 3, true);
                 enemyBubble.play(Animations.Enemy.FLOAT);
                 enemyBubble.anchor.setTo(0.5, 0.5);
                 enemyBubble.body.allowGravity = false;
@@ -448,32 +513,71 @@ function enemiesShootBubble () {
         } else {
             enemy.hasFired = false;
         }
-
     }
 }
 
-function beeStings () {
-    // if (enemies.animations.currentFrame === 2) {
-    enemies.forEach(shouldBeeSting, this, true);
-    function shouldBeeSting(enemy) {
+
+//Create Fire Breath for Dragons
+function dragonsFireBreath () {
+
+    dragons.forEach(shouldDragonBreath, this, true);
+    function shouldDragonBreath(dragon) {
         // debugger
-        if (enemy.name && enemy.animations.currentFrame.index === shootingFrames[enemy.name].shootingFrame) {
-            if (!enemy.hasFired) {
-                enemy.hasFired = true;
+        if (dragon.name && dragon.animations.currentFrame.index === shootingFrames[dragon.name].shootingFrame) {
+            if (!dragon.hasFired) {
+                dragon.hasFired = true;
+                // Create fireball.
+                if (dragon.position.x < 160) {
+                    fireball = game.add.sprite(dragon.x + 28, dragon.y + shootingFrames[dragon.name].yOffset, 'fireball');
+                    game.physics.enable(fireball, Phaser.Physics.ARCADE);
+                    fireball.body.velocity.x = 35;
+                }
+
+                else {
+                    fireball = game.add.sprite(dragon.x, dragon.y + shootingFrames[dragon.name].yOffset, 'fireball');
+                    game.physics.enable(fireball, Phaser.Physics.ARCADE);
+                    fireball.scale.x *= -1;
+                    fireball.body.velocity.x = -35;
+                }
+
+                fireball.animations.add(Animations.Enemy.EXHALE, [0, 1, 2, 3, 4, 5], 18, true);
+                fireball.play(Animations.Enemy.EXHALE);
+                fireball.anchor.setTo(0.5, 0.5);
+                fireball.body.allowGravity = false;
+                fireball.checkWorldBounds = true;
+                fireball.outOfBoundsKill = true;
+                fireballs.add(fireball);
+            }
+        } else {
+            dragon.hasFired = false;
+        }
+    }
+}
+
+//  Create Stinger shot for bees
+function beeStings () {
+
+    bees.forEach(shouldBeeSting, this, true);
+    function shouldBeeSting(bee) {
+        // debugger
+        if (bee.name && bee.animations.currentFrame.index === shootingFrames[bee.name].shootingFrame) {
+            if (!bee.hasFired) {
+                bee.hasFired = true;
                 // Create stinger.
-                if (enemy.position.x < 160) {
-                    stinger = game.add.sprite(enemy.x + 28, enemy.y + shootingFrames[enemy.name].yOffset, 'stinger');
+                if (bee.position.x < 160) {
+                    stinger = game.add.sprite(bee.x + 28, bee.y + shootingFrames[bee.name].yOffset, 'stinger');
                     game.physics.enable(stinger, Phaser.Physics.ARCADE);
                     stinger.body.velocity.x = 30;
                 }
 
                 else {
-                    stinger = game.add.sprite(enemy.x, enemy.y + shootingFrames[enemy.name].yOffset, 'stinger');
+                    stinger = game.add.sprite(bee.x, bee.y + shootingFrames[bee.name].yOffset, 'stinger');
                     game.physics.enable(stinger, Phaser.Physics.ARCADE);
+                    stinger.scale.x *= -1;
                     stinger.body.velocity.x = -30;
                 }
 
-                stinger.animations.add(Animations.Enemy.STING, [0, 1, 2, 3, 4, 5, 6, 7], 50, true);
+                stinger.animations.add(Animations.Enemy.STING, [0, 1, 2, 3, 4, 5, 6, 7], 21, true);
                 stinger.play(Animations.Enemy.STING);
                 stinger.anchor.setTo(0.5, 0.5);
                 stinger.body.allowGravity = false;
@@ -482,13 +586,36 @@ function beeStings () {
                 stingers.add(stinger);
             }
         } else {
-            enemy.hasFired = false;
+            bee.hasFired = false;
         }
-
     }
 }
 
 // Nemo and Bubble Collision
+function bubbleHitsNemo (nemo, bubbles) {
+    bubbles.kill();
+    nemo.play(Animations.Nemo.DIE);
+    game.physics.arcade.checkCollision.down = false;
+    nemo.body.collideWorldBounds = false;
+    nemo.animations.currentAnim.onComplete.add(function () {
+        nemo.kill();
+    }, this);
+}
+
+
+// Nemo and fireballs Collision
+function fireballHitsNemo (nemo, fireballs) {
+    fireballs.kill();
+    nemo.play(Animations.Nemo.DIE);
+    game.physics.arcade.checkCollision.down = false;
+    nemo.body.collideWorldBounds = false;
+    nemo.animations.currentAnim.onComplete.add(function () {
+        nemo.kill();
+    }, this);
+}
+
+
+// Nemo and stinger Collision
 function beeStingHitsNemo (nemo, stingers) {
     stingers.kill();
     nemo.play(Animations.Nemo.DIE);
@@ -499,7 +626,10 @@ function beeStingHitsNemo (nemo, stingers) {
     }, this);
 }
 
-function enemiesResolveNemoBubbless (nemoBubbles, enemy) {
+
+//   Nemos KO Attack Collision with Enemies  //
+
+function enemiesResolveNemoBubbles (nemoBubbles, enemy) {
     nemoBubbles.kill();
     enemy.play(Animations.Enemy.SLEEP);
 
@@ -509,7 +639,44 @@ function enemiesResolveNemoBubbless (nemoBubbles, enemy) {
     }
 }
 
-function gorillaResolveNemoBubbless (gorilla, nemoBubbles) {
+function dragonNemoBubbles (nemoBubbles, dragon) {
+    nemoBubbles.kill();
+    dragon.play(Animations.Enemy.SLEEP);
+
+    game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
+    function playSleepAnimation () {
+        dragon.play(Animations.Enemy.STAND);
+    }
+}
+
+//   Nemos KO Attack Collision with Enemies  //
+
+function beesNemoBubbles (nemoBubbles, bee) {
+    nemoBubbles.kill();
+    bee.play(Animations.Enemy.SLEEP);
+
+    game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
+    function playSleepAnimation () {
+        bee.play(Animations.Enemy.STAND);
+    }
+}
+
+function bubblesCollide (nemoBubbles, enemyBubbles) {
+    nemoBubbles.kill();
+    enemyBubbles.kill();
+}
+
+
+
+function bubblesCollide (nemoBubbles, enemyBubbles) {
+    nemoBubbles.kill();
+    enemyBubbles.kill();
+}
+
+
+//   Nemos KO bubble Collision with Gorilla   //
+
+function gorillaResolveNemoBubbles (gorilla, nemoBubbles) {
     gorilla.play(Animations.Enemy.SLEEP);
     gorilla.body.velocity = 0;
     if (gorilla && gorilla.animations.currentAnim == Animations.Enemy.SLEEP) {
@@ -524,17 +691,6 @@ function gorillaResolveNemoBubbless (gorilla, nemoBubbles) {
 }
 
 
-// Nemo and Bubble Collision
-function bubbleHitsNemo (nemo, bubbles) {
-        bubbles.kill();
-        nemo.play(Animations.Nemo.DIE);
-        game.physics.arcade.checkCollision.down = false;
-        nemo.body.collideWorldBounds = false;
-        nemo.animations.currentAnim.onComplete.add(function () {
-            nemo.kill();
-        }, this);
-}
-
 // Collision with Enemy Kills Nemo
 function resolveEnemyCollision(nemo, enemies) {
             nemo.play(Animations.Nemo.DIE);
@@ -544,8 +700,6 @@ function resolveEnemyCollision(nemo, enemies) {
                 nemo.kill();
            }, this);
 }
-
-
 
 
 function gorillaPath () {
