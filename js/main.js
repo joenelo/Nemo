@@ -18,7 +18,7 @@ const Animations = {
         SLEEP: 'sleep'
     },
     Bubble: {
-        FLOAT: 'float'
+        FLOAT: 'float',
     },
     Stinger: {
         STING: 'sting'
@@ -141,6 +141,7 @@ function preload() {
 
     // sprite assets
     game.load.spritesheet('bubble', 'assets/bubble.png', 16, 16);
+    game.load.spritesheet('bubblePop', 'assets/bubblepop.png', 16, 16);
     game.load.spritesheet('stinger', 'assets/stinger.png', 8, 5);
     game.load.spritesheet('fireball', 'assets/fireball.png', 21, 11);
 
@@ -631,6 +632,7 @@ function beeStingHitsNemo (nemo, stingers) {
 
 function enemiesResolveNemoBubbles (nemoBubbles, enemy) {
     nemoBubbles.kill();
+
     enemy.play(Animations.Enemy.SLEEP);
 
     game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
@@ -661,16 +663,11 @@ function beesNemoBubbles (nemoBubbles, bee) {
     }
 }
 
-function bubblesCollide (nemoBubbles, enemyBubbles) {
-    nemoBubbles.kill();
-    enemyBubbles.kill();
-}
-
-
 
 function bubblesCollide (nemoBubbles, enemyBubbles) {
     nemoBubbles.kill();
     enemyBubbles.kill();
+
 }
 
 
