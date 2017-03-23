@@ -1,3 +1,5 @@
+
+// -- Create Constant Variables -- //
 const LIZARD = 'lizard';
 const MOLE = 'mole';
 const CRUSTY = 'crusty';
@@ -15,10 +17,11 @@ const Animations = {
     },
     Enemy: {
         STAND: 'stand',
+        STILL: 'still',
         SLEEP: 'sleep'
     },
     Bubble: {
-        FLOAT: 'float',
+        FLOAT: 'float'
     },
     Stinger: {
         STING: 'sting'
@@ -28,15 +31,16 @@ const Animations = {
     }
 };
 
-// Create my variables for...
+// -- Create my variables for... -- //
 
-// The map.
+// -- The map -- //
 var map;
 var layer;
 var background;
 var cursors;
 var hitButton;
 
+// -- Enemy attack variables -- //
 var enemyBubbles;
 var enemyBubble;
 var stinger;
@@ -44,23 +48,26 @@ var stingers;
 var fireball;
 var fireballs;
 
-// The player.
+// -- The player -- //
 var nemo;
 var nemoBubbles;
 var nemoBubble;
+var canHitGorilla = true;
 
-// Enemies
+// -- Enemies -- //
 var enemies;
 var dragons;
 var bees;
+
+// -- make shoot frames so enemies can attack when they open their mouths
 var shootingFrames = {
     mole: { shootingFrame: 2, yOffset: 15 },
     lizard: { shootingFrame: 3, yOffset: 12 },
     crusty: { shootingFrame: 2, yOffset: 12 },
     dragon: { shootingFrame: 0, yOffset: 14 },
-    bee: { shootingFrame: 1, yOffset: 20 }
+    bee: { shootingFrame: 1, yOffset: 20 },
+    gorilla: { shootingFrame: 4, yOffset: 10 }
 };
-
 
 var mole;
 var mole1;
@@ -93,24 +100,53 @@ var bee3;
 var bee4;
 var bee5;
 
+// -- Boss Variables -- //
 var gorilla;
+var gorillaHP = 3;
+var gorillaSleeping = false;
+var explosionPlayed = false;
 
-// sounds
+// -- Gorilla being attacked sprites variables -- //
+var explosion;
+var banana;
+var bananas;
+
+// -- Variable to stop multiple Collisions during death animation -- //
+var nemoCollides = false;
+
+// -- Sounds -- //
 var jumpSound;
+var bubblePop;
+var sleepSound;
+var music;
+var enemyGetsHit;
+var bossGetsHit;
+var bossDies;
+var bossMusic;
+var youWinSong;
+var nemoDies;
 
+// -- Win Banner - //
+var youWinPhoto;
 
-var game = new Phaser.Game(320, 500, Phaser.AUTO, '', { preload: preload, create: create , update: update});
+var game = new Phaser.Game(320, 500, Phaser.AUTO, '');
 
+// -------------------------------------------------------------------------------//
+// -Main State of Game so that the player can restart the game each time they die-//
+// -------------------------------------------------------------------------------//
 
-function preload() {
+var mainState = {
+    preload: function () {
+
+    // -- Load the tile map, level, and background here -- //
     game.load.tilemap('level1', 'assets/nemo.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.image('tiles', 'assets/platformer_tiles.png');
     game.load.spritesheet('background', 'assets/nemoBackground1.png', 320, 500);
 
-    // Nemo Spritesheet
+    // -- Nemo Spritesheet --//
     game.load.spritesheet('nemo', 'assets/nemo1.png', 48, 30);
 
-    // Enemy spritesheets
+    // -- Enemy spritesheets --//
     game.load.spritesheet('lizard', 'assets/leftLizard.png', 35, 21);
     game.load.spritesheet('lizard1', 'assets/lizard.png', 35, 21);
     game.load.spritesheet('lizard2', 'assets/leftLizard.png', 35, 21);
@@ -138,41 +174,77 @@ function preload() {
     game.load.spritesheet('bee4', 'assets/Bee.png', 25, 26);
     game.load.spritesheet('bee5', 'assets/leftBee.png', 25, 26);
     game.load.spritesheet('gorilla', 'assets/Gorilla.png', 52, 63);
+    game.load.spritesheet('banana', 'assets/banana.png',23, 22);
 
-    // sprite assets
+    // -- sprite assets --//
+    game.load.image('nemoBubble', 'assets/nemoBubble.png', 16, 16);
     game.load.spritesheet('bubble', 'assets/bubble.png', 16, 16);
     game.load.spritesheet('bubblePop', 'assets/bubblepop.png', 16, 16);
     game.load.spritesheet('stinger', 'assets/stinger.png', 8, 5);
     game.load.spritesheet('fireball', 'assets/fireball.png', 21, 11);
+    game.load.spritesheet('explosion', 'assets/explosion.png', 128, 128);
 
+    // -- Load sounds --//
     game.load.audio('jump', 'sounds/Jump.wav');
-}
+    game.load.audio('pop', 'sounds/BubblePop.mp3');
+    game.load.audio('sleep', 'sounds/KOSOund.mp3');
+    game.load.audio('music', 'sounds/NightSea.mp3');
+    game.load.audio('enemyGetsHit', 'sounds/EnemyGetsHit.wav');
+    game.load.audio('bossGetsHit', 'sounds/BossGetsHit.wav');
+    game.load.audio('bossDies', 'sounds/BossDies.wav');
+    game.load.audio('bossMusic', 'sounds/peanutbutterjelly.mp3');
+    game.load.audio('youWinMusic', 'sounds/NextLevel.wav');
+    game.load.audio('nemoDies', 'sounds/HeroDies.wav');
 
-function create() {
+    // -- Load Win Banner --//
+    game.load.image('winBanner', 'assets/LittleNemoLogo.png');
+},
 
-    // Create the map.
-    game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
-    game.input.onDown.add(gofull, this);
+create: function () {
 
+    game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL; // -- Create the map --//
+
+    // -- Go full screen with click of the mouse(Literally click your mouse  --//
+    game.input.onDown.add(this.gofull, this);
+
+    // -- loading background and great background animation -- //
     background = game.add.sprite(0, 2700, 'background');
     background.animations.add('stars', [0, 1, 2, 1], 7, true);
     background.play('stars');
     background.fixedToCamera = true;
     background.cameraOffset.setTo(0, 0);
 
-
+    // -- Add Map and Tile Map + layers -- //
     map = game.add.tilemap('level1');
     map.addTilesetImage('platformer_tiles', 'tiles');
     layer = map.createLayer('layer1');
     layer.resizeWorld();
 
+    // -- start Arcade Physics Engine -- //
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
-    // add sound
+    // -- add sound to the game so its now useable  -- //
     jumpSound = game.add.audio(Animations.Nemo.JUMP);
+    sleepSound = game.add.audio(Animations.Enemy.SLEEP);
+    sleepSound.loop = true;
+    music = game.add.audio('music');
+    bubblePop = game.add.audio('pop');
+    enemyGetsHit = game.add.audio('enemyGetsHit');
+    bossGetsHit = game.add.audio('bossGetsHit');
+    bossDies = game.add.audio('bossDies');
+    bossMusic = game.add.audio('bossMusic');
+    youWinSong = game.add.audio('youWinSong');
+    nemoDies = game.add.audio('nemoDies');
 
-    // Create Nemo
-    nemo = game.add.sprite(150, 1350, 'nemo');
+    // -- Add and play Level Music -- //
+    music.loop = true;
+    music.play();
+
+    //----------------------------------//
+    //-------- Create Nemo Here --------//
+    //----------------------------------//
+
+    nemo = game.add.sprite(30, 3100, 'nemo');
     game.physics.enable(nemo);
     game.physics.arcade.gravity.y = 700;
     nemo.body.collideWorldBounds = true;
@@ -183,7 +255,7 @@ function create() {
     nemo.anchor.x = 0.5;
     nemo.anchor.y = 0.5;
 
-    // Make Nemo move
+    // -- Make Nemo animations for his movements -- //
     nemo.animations.add(Animations.Nemo.WALK, [3, 4, 5], 10, true);
     nemo.animations.add(Animations.Nemo.WAIT, [0], 10, true);
     nemo.animations.add(Animations.Nemo.JUMP, [2], 10, true);
@@ -191,8 +263,10 @@ function create() {
     nemo.animations.add(Animations.Nemo.HIT, [11, 13, 14, 15, 16, 15, 14, 0], 20, false);
     nemo.animations.add(Animations.Nemo.DIE, [21, 20, 10, 9, 21, 20, 10, 9], 4, false);
 
+    // -- Allow his one directional sprite sheet to be used in the opposite direction -- //
     nemo.body.fixedRotation = true;
     nemo.direction = 'right';
+    // -- set Nemo's body size -- //
     nemo.body.setSize(20, 20, 14, 10);
 
     //----------------------------------//
@@ -206,9 +280,9 @@ function create() {
     dragons = game.add.group();
     dragons.enableBody = true;
 
-
     // -----------------------------------------//
     // ------- Create Individual Enemies -------//
+    // ------and add each enemy to a group------//
     // -----------------------------------------//
 
     function addMole(x, y, asset, animationFrames) {
@@ -299,16 +373,25 @@ function create() {
     addBee(27, 422, 'bee4', [0, 2, 1, 3]);
     addBee(250, 342, 'bee5', [0, 2, 1, 2, 1, 2, 1, 3]);
 
-
+    // -----------------------------------------//
+    // -------- Create End off of Game ---------//
+    // -----------------------------------------//
     gorilla = game.add.sprite(41, 222, 'gorilla');
     game.physics.enable(gorilla);
     gorilla.animations.add(Animations.Enemy.SLEEP, [5, 6], 2, true);
-    gorilla.animations.add(Animations.Enemy.STAND, [1, 2], 1.75, true);
+    gorilla.animations.add(Animations.Enemy.STAND, [2, 1], 1.75, true);
+    gorilla.animations.add(Animations.Enemy.STILL, [1], 0, true);
+    gorilla.play(Animations.Enemy.STILL);
     gorilla.body.fixedRotation = true;
     gorilla.body.collideWorldBounds = true;
     gorilla.anchor.x = 0.5;
     gorilla.anchor.y = 0.5;
+    gorilla.body.setSize(35, 32, 3, 30);
     gorilla.facing = 'right';
+
+
+
+
 
     // -----------------------------------------//
     // ------- Turn on Keyboard and Mouse ------//
@@ -332,7 +415,7 @@ function create() {
     game.physics.enable(enemyBubbles, Phaser.Physics.ARCADE);
 
     nemoBubbles = game.add.group();
-    game.physics.enable(nemoBubbles, Phaser.Physics.ARCADE);
+    game.physics.enable(enemyBubbles, Phaser.Physics.ARCADE);
 
     stingers = game.add.group();
     game.physics.enable(stingers, Phaser.Physics.ARCADE);
@@ -340,11 +423,14 @@ function create() {
     fireballs = game.add.group();
     game.physics.enable(fireballs, Phaser.Physics.ARCADE);
 
+    bananas = game.add.group();
+    game.physics.enable(bananas, Phaser.Physics.ARCADE);
+
 
     // -----------------------------------------//
     // --------- End of Create Section ---------//
     // -----------------------------------------//
-}
+},
 
 
 
@@ -353,38 +439,57 @@ function create() {
 // -----------------------------------------------------//
 
 
-function canInterruptAnimation(nemo) {
+    canInterruptAnimation: function (nemo) {
     return !(nemo.animations.currentAnim.name === Animations.Nemo.HIT && nemo.animations.currentAnim.isPlaying)
         && !(nemo.animations.currentAnim.name === Animations.Nemo.DIE && nemo.animations.currentAnim.isPlaying);
-}
+},
 
 
-// -----------------------------------------//
-// ------------ Start of Update  -----------//
-// -----------------------------------------//
+    // -----------------------------------------//
+    // ------------ Start of Update  -----------//
+    // -----------------------------------------//
 
-function update() {
+    update: function () {
+
+
 
     // -----------------------------------------//
     // ----------- Calling functions -----------//
     // -----------------------------------------//
-    gorillaPath();
-    enemiesShootBubble();
-    dragonsFireBreath();
-    beeStings();
+
+    if (nemoCollides === false) {
+        this.gorillaPath();
+    }
+
+    this.enemiesShootBubble();
+    this.dragonsFireBreath();
+    this.beeStings();
 
 
     game.physics.arcade.collide(nemo, layer);
     game.physics.arcade.collide(gorilla, layer);
-    game.physics.arcade.collide(nemo, enemies, resolveEnemyCollision, null, this);
-    game.physics.arcade.collide(enemyBubbles, nemo, bubbleHitsNemo, null, this);
-    game.physics.arcade.collide(enemyBubbles, nemoBubbles, bubblesCollide, null, this);
-    game.physics.arcade.collide(stingers, nemo, beeStingHitsNemo, null, this);
-    game.physics.arcade.collide(fireballs, nemo, fireballHitsNemo, null, this);
-    game.physics.arcade.collide(nemoBubbles, enemies, enemiesResolveNemoBubbles, null, this);
-    game.physics.arcade.collide(nemoBubbles, bees, beesNemoBubbles, null, this);
-    game.physics.arcade.collide(nemoBubbles, dragons, dragonNemoBubbles, null, this);
-    game.physics.arcade.collide(nemoBubbles, gorilla, gorillaResolveNemoBubbles, null, this);
+
+    // -- Wrap all things that kill Nemo in the Collide variable and set it to false, this will avoid multiple collisions and -- //
+    // -- Stop your sounds from firing each time Nemo collides with something during his death animation  -- //
+    if (nemoCollides === false) {
+        game.physics.arcade.collide(nemo, enemies, this.resolveEnemyCollision, null, this);
+        game.physics.arcade.collide(nemo, dragons, this.resolveDragonCollision, null, this);
+        game.physics.arcade.collide(nemo, bees, this.resolveBeeCollision, null, this);
+        game.physics.arcade.collide(enemyBubbles, nemo, this.bubbleHitsNemo, null, this);
+        game.physics.arcade.collide(enemyBubbles, nemoBubbles, this.bubblesCollide, null, this);
+        game.physics.arcade.collide(stingers, nemo, this.beeStingHitsNemo, null, this);
+        game.physics.arcade.collide(fireballs, nemo, this.fireballHitsNemo, null, this);
+        game.physics.arcade.collide(gorilla, nemo, this.resolveGorillaCollision, null, this);
+    }
+    if (canHitGorilla == true) {
+        game.physics.arcade.collide(gorilla, nemoBubbles,  this.gorillaResolveNemoBubble, null, this);
+    }
+        game.physics.arcade.collide(nemoBubbles, enemies, this.enemiesResolveNemoBubbles, null, this);
+        game.physics.arcade.collide(nemoBubbles, bees, this.beesNemoBubbles, null, this);
+        game.physics.arcade.collide(nemoBubbles, dragons, this.dragonNemoBubbles, null, this);
+    if (explosionPlayed === false) {
+            game.physics.arcade.collide(bananas, nemo, this.bananaCollide, null, this);
+    }
 
 
     // -----------------------------------------//
@@ -396,105 +501,119 @@ function update() {
     var nextXVelocity = undefined;
     var nextYVelocity = undefined;
 
-    if (cursors.up.justDown && nemo.body.onFloor()) {
-        nextYVelocity = -275;
-        nextAnimation = Animations.Nemo.JUMP;
-    }
-    else if (cursors.left.isDown) {
-        if (nemo.direction != 'left') {
-            nemo.scale.x *= -1;
-            nemo.direction = 'left';
-        }
-        if (nemo.animations.currentAnim.name != Animations.Nemo.WALK && (nemo.body.onFloor() || nemo.body.touching.down )) {
-            nextAnimation = Animations.Nemo.WALK;
-        }
-        nextXVelocity = -125;
-    } else if (cursors.right.isDown) {
-        if (nemo.direction != 'right') {
-            nemo.scale.x *= -1;
-            nemo.direction = 'right';
-        }
-        if (nemo.animations.currentAnim.name != Animations.Nemo.WALK && (nemo.body.onFloor() || nemo.body.touching.down)) {
-            nextAnimation = Animations.Nemo.WALK;
-        }
-        nextXVelocity = 125;
-    } else if (nemo.body.onFloor() || nemo.body.touching.down){
-        nextAnimation = Animations.Nemo.WAIT;
-    }
-    if (hitButton.justDown) {
-        nextAnimation = Animations.Nemo.HIT;
-        nextXVelocity = 0;
-    }
+    if (explosionPlayed === false) {
 
-    // -----------------------------------------//
-    // - Create Nemo's attack in his Movements -//
-    // -----------------------------------------//
+        if (gorillaHP <= 0) {
+            this.gorillaDies();
+        }
 
-    if (nemo.animations.currentFrame.index === 15) {
-        if (nemo.direction === 'right') {
-            nemoBubble = game.add.sprite(nemo.x +18, nemo.y -5, 'bubble');
+
+        if (cursors.up.justDown && nemo.body.onFloor()) {
+            nextYVelocity = -275;
+            nextAnimation = Animations.Nemo.JUMP;
+        }
+        else if (cursors.left.isDown) {
+            if (nemo.direction != 'left') {
+                nemo.scale.x *= -1;
+                nemo.direction = 'left';
+            }
+            if (nemo.animations.currentAnim.name != Animations.Nemo.WALK && (nemo.body.onFloor() || nemo.body.touching.down )) {
+                nextAnimation = Animations.Nemo.WALK;
+            }
+            nextXVelocity = -125;
+        } else if (cursors.right.isDown) {
+            if (nemo.direction != 'right') {
+                nemo.scale.x *= -1;
+                nemo.direction = 'right';
+            }
+            if (nemo.animations.currentAnim.name != Animations.Nemo.WALK && (nemo.body.onFloor() || nemo.body.touching.down)) {
+                nextAnimation = Animations.Nemo.WALK;
+            }
+            nextXVelocity = 125;
+        } else if (nemo.body.onFloor() || nemo.body.touching.down){
+            nextAnimation = Animations.Nemo.WAIT;
+        }
+        if (hitButton.justDown) {
+            nemoShoots();
+            nextAnimation = Animations.Nemo.HIT;
+            nextXVelocity = 0;
+        }
+
+        // -----------------------------------------//
+        // - Create Nemo's attack in his Movements -//
+        // -----------------------------------------//
+
+        function nemoShoots () {
+            if (nemo.direction === 'right') {
+                nemoBubble = game.add.sprite(nemo.x +18, nemo.y -5, 'nemoBubble');
+                game.physics.enable(nemoBubble, Phaser.Physics.ARCADE);
+
+            }
+            else {
+                nemoBubble = game.add.sprite(nemo.x -18, nemo.y -5, 'nemoBubble');
+                nemoBubble.scale.x *= -1;
+                game.physics.enable(nemoBubble, Phaser.Physics.ARCADE);
+            }
+
             game.physics.enable(nemoBubble, Phaser.Physics.ARCADE);
+            nemoBubble.anchor.setTo(0.5, 0.5);
+            nemoBubble.body.allowGravity = false;
+            nemoBubble.lifespan = 200;
+
+            nemoBubble.alpha = 0;
+            nemoBubbles.add(nemoBubble);
         }
-        else {
-            nemoBubble = game.add.sprite(nemo.x -18, nemo.y -5, 'bubble');
-            game.physics.enable(nemoBubble, Phaser.Physics.ARCADE);
+
+
+        if (cursors.down.isDown && (nemo.body.onFloor() || nemo.body.touching.down)){
+            nextAnimation = Animations.Nemo.DUCK;
+            nextXVelocity = 0;
         }
 
-        nemoBubble.animations.add(Animations.Enemy.FLOAT, [0, 1], 2, true);
-        nemoBubble.play(Animations.Enemy.FLOAT);
-        nemoBubble.anchor.setTo(0.5, 0.5);
-        nemoBubble.body.allowGravity = false;
-        nemoBubble.lifespan = 200;
-        nemoBubble.body.velocity.x = 50;
-        nemoBubble.alpha = 0;
-        nemoBubbles.add(nemoBubble);
+        if (nextXVelocity) {
+            nemo.body.velocity.x = nextXVelocity;
+        }
+        if (nextYVelocity) {
+            nemo.body.velocity.y = nextYVelocity;
+            jumpSound.play();
+        }
+        if (nextAnimation && this.canInterruptAnimation(nemo)) {
+            nemo.animations.play(nextAnimation);
+        } else if (!this.canInterruptAnimation(nemo)) {
+            nemo.body.velocity.x = 0;
+        }
     }
 
+     // ---------------------------------------------------- //
+    // -- Jump through the branches, only collide on top! -- //
+    // ---------------------------------------------------- //
 
-    if (cursors.down.isDown && (nemo.body.onFloor() || nemo.body.touching.down)){
-        nextAnimation = Animations.Nemo.DUCK;
-        nextXVelocity = 0;
-    }
-
-    if (nextXVelocity) {
-        nemo.body.velocity.x = nextXVelocity;
-    }
-    if (nextYVelocity) {
-        nemo.body.velocity.y = nextYVelocity;
-        jumpSound.play();
-    }
-    if (nextAnimation && canInterruptAnimation(nemo)) {
-        nemo.animations.play(nextAnimation);
-    } else if (!canInterruptAnimation(nemo)) {
-        nemo.body.velocity.x = 0;
-    }
-
-    // Jump through the branches, only collide on top!
     map.forEach(function (through) {
         if (through) { through.collideDown = false;} }, game, 0, 0, map.width, map.height, layer);
 
-}
+},
 // -----------------------------------------//
 // ----------- End of Movements ------------//
 // -----------------------------------------//
 
 
+// -------------------------------------------------------------------//
+// --------- This is where the enemy shoots their bubbles ------------//
+// -------------------------------------------------------------------//
 
-
-function enemiesShootBubble () {
-       // if (enemies.animations.currentFrame === 2) {
+    enemiesShootBubble: function () {
     enemies.forEach(shouldEnemyShoot, this, true);
     function shouldEnemyShoot(enemy) {
         if (enemy.name && enemy.animations.currentFrame.index === shootingFrames[enemy.name].shootingFrame) {
             if (!enemy.hasFired) {
                 enemy.hasFired = true;
-                // Create enemyBubble.
+                // -- Create enemyBubble attack. -- //
                 if (enemy.position.x < 160) {
                     enemyBubble = game.add.sprite(enemy.x + 28, enemy.y + shootingFrames[enemy.name].yOffset, 'bubble');
                     game.physics.enable(enemyBubble, Phaser.Physics.ARCADE);
                     enemyBubble.body.velocity.x = 30;
                 }
-
+                // -- If Enemy is facing left, shoot the bubble the opposite way -- //
                 else {
                     enemyBubble = game.add.sprite(enemy.x, enemy.y + shootingFrames[enemy.name].yOffset, 'bubble');
                     game.physics.enable(enemyBubble, Phaser.Physics.ARCADE);
@@ -502,7 +621,7 @@ function enemiesShootBubble () {
                     enemyBubble.body.velocity.x = -30;
 
                 }
-
+                // -- Add an animation to the attack bubble, and it to a group -- //
                 enemyBubble.animations.add(Animations.Enemy.FLOAT, [0, 1], 3, true);
                 enemyBubble.play(Animations.Enemy.FLOAT);
                 enemyBubble.anchor.setTo(0.5, 0.5);
@@ -515,15 +634,15 @@ function enemiesShootBubble () {
             enemy.hasFired = false;
         }
     }
-}
+},
 
-
-//Create Fire Breath for Dragons
-function dragonsFireBreath () {
+// -------------------------------------------------------------------//
+// ------------ This is where the dragon shoots its fire  ------------//
+// -------------------------------------------------------------------//
+    dragonsFireBreath: function  () {
 
     dragons.forEach(shouldDragonBreath, this, true);
     function shouldDragonBreath(dragon) {
-        // debugger
         if (dragon.name && dragon.animations.currentFrame.index === shootingFrames[dragon.name].shootingFrame) {
             if (!dragon.hasFired) {
                 dragon.hasFired = true;
@@ -533,7 +652,7 @@ function dragonsFireBreath () {
                     game.physics.enable(fireball, Phaser.Physics.ARCADE);
                     fireball.body.velocity.x = 35;
                 }
-
+                // -- If the dragon is facing left, shoot the fire ball the other way -- //
                 else {
                     fireball = game.add.sprite(dragon.x, dragon.y + shootingFrames[dragon.name].yOffset, 'fireball');
                     game.physics.enable(fireball, Phaser.Physics.ARCADE);
@@ -541,6 +660,7 @@ function dragonsFireBreath () {
                     fireball.body.velocity.x = -35;
                 }
 
+                // -- Add animation to the fire balls so it change size & color  and add it to a group -- //
                 fireball.animations.add(Animations.Enemy.EXHALE, [0, 1, 2, 3, 4, 5], 18, true);
                 fireball.play(Animations.Enemy.EXHALE);
                 fireball.anchor.setTo(0.5, 0.5);
@@ -553,14 +673,16 @@ function dragonsFireBreath () {
             dragon.hasFired = false;
         }
     }
-}
+},
 
-//  Create Stinger shot for bees
-function beeStings () {
+// -------------------------------------------------------------------//
+// ------------ This is where the bee shoots its stinger  ------------//
+// -------------------------------------------------------------------//
+    beeStings: function  () {
 
     bees.forEach(shouldBeeSting, this, true);
     function shouldBeeSting(bee) {
-        // debugger
+
         if (bee.name && bee.animations.currentFrame.index === shootingFrames[bee.name].shootingFrame) {
             if (!bee.hasFired) {
                 bee.hasFired = true;
@@ -570,14 +692,14 @@ function beeStings () {
                     game.physics.enable(stinger, Phaser.Physics.ARCADE);
                     stinger.body.velocity.x = 30;
                 }
-
+                // -- If the bee is facing left, shoot the stinger the other way -- //
                 else {
                     stinger = game.add.sprite(bee.x, bee.y + shootingFrames[bee.name].yOffset, 'stinger');
                     game.physics.enable(stinger, Phaser.Physics.ARCADE);
                     stinger.scale.x *= -1;
                     stinger.body.velocity.x = -30;
                 }
-
+                // -- Add animation to the stinger so it change color and add it to a group -- //
                 stinger.animations.add(Animations.Enemy.STING, [0, 1, 2, 3, 4, 5, 6, 7], 21, true);
                 stinger.play(Animations.Enemy.STING);
                 stinger.anchor.setTo(0.5, 0.5);
@@ -590,147 +712,344 @@ function beeStings () {
             bee.hasFired = false;
         }
     }
-}
+},
 
-// Nemo and Bubble Collision
-function bubbleHitsNemo (nemo, bubbles) {
+
+// --------------------------------------------------------------------------//
+// ------------ This is where the nemo and enemy bubbles collide ------------//
+// --------------------------------------------------------------------------//
+bubbleHitsNemo: function  (nemo, bubbles) {
+    // -- Make nemo collision true -- //
+    nemoCollides = true;
+    bubblePop.play();
+    nemoDies.play();
     bubbles.kill();
+    music.stop();
+    bubbles.body = null;
     nemo.play(Animations.Nemo.DIE);
     game.physics.arcade.checkCollision.down = false;
     nemo.body.collideWorldBounds = false;
     nemo.animations.currentAnim.onComplete.add(function () {
+        // -- when animation is complete, kill nemo and restart the level -- //
         nemo.kill();
+        this.restartLevel();
     }, this);
-}
+},
 
 
-// Nemo and fireballs Collision
-function fireballHitsNemo (nemo, fireballs) {
+// --------------------------------------------------------------------------//
+// ------------ This is where the nemo and fireballs collide ----------------//
+// --------------------------------------------------------------------------//
+fireballHitsNemo: function  (nemo, fireballs) {
+    // -- Make nemo collision true -- //
+    nemoCollides = true;
+    nemoDies.play();
+    music.stop();
     fireballs.kill();
+    fireballs.body = null;
     nemo.play(Animations.Nemo.DIE);
     game.physics.arcade.checkCollision.down = false;
     nemo.body.collideWorldBounds = false;
+    // -- when animation is complete, kill nemo and restart the level -- //
     nemo.animations.currentAnim.onComplete.add(function () {
         nemo.kill();
+        this.restartLevel();
     }, this);
-}
+},
 
-
-// Nemo and stinger Collision
-function beeStingHitsNemo (nemo, stingers) {
+// --------------------------------------------------------------------------//
+// ------------ This is where the nemo and stingers collide ------ ----------//
+// --------------------------------------------------------------------------//
+beeStingHitsNemo: function  (nemo, stingers) {
+    // -- Make nemo collision true -- //
+    nemoCollides = true;
+    nemoDies.play();
+    music.stop();
     stingers.kill();
+    stingers.body = null;
     nemo.play(Animations.Nemo.DIE);
     game.physics.arcade.checkCollision.down = false;
     nemo.body.collideWorldBounds = false;
     nemo.animations.currentAnim.onComplete.add(function () {
+    // -- when animation is complete, kill nemo and restart the level -- //
         nemo.kill();
+        this.restartLevel();
     }, this);
-}
+},
 
 
-//   Nemos KO Attack Collision with Enemies  //
-
-function enemiesResolveNemoBubbles (nemoBubbles, enemy) {
+// --------------------------------------------------------------------------//
+// ----------------- This is where the nemo Ko's Enemies  -------------------//
+// --------------------------------------------------------------------------//
+enemiesResolveNemoBubbles: function  (nemoBubbles, enemy) {
+    // -- Play sounds -- //
+    enemyGetsHit.play();
+    sleepSound.play();
+    // -- kill Nemos translucent bubble so no more collisions happen -- //
     nemoBubbles.kill();
-
+    // -- play enemy sleep animation for 5 seconds -- //
     enemy.play(Animations.Enemy.SLEEP);
-
     game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
     function playSleepAnimation () {
+        // -- restart the enemy animation -- //
         enemy.play(Animations.Enemy.STAND);
+        // -- stop the sleep sound -- //
+        sleepSound.stop();
     }
-}
+},
 
-function dragonNemoBubbles (nemoBubbles, dragon) {
-    nemoBubbles.kill();
+// --------------------------------------------------------------------------//
+// ----------------- This is where the nemo Ko's dragons  -------------------//
+// --------------------------------------------------------------------------//
+dragonNemoBubbles: function  (nemoBubbles, dragon) {
+    // -- Play sounds -- //
+    enemyGetsHit.play();
+    sleepSound.play();
+
+    nemoBubbles.kill(); // -- kill Nemos translucent bubble so no more collisions happen -- //
+
+    // -- play dragon sleep animation for 5 seconds -- //
     dragon.play(Animations.Enemy.SLEEP);
-
     game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
     function playSleepAnimation () {
-        dragon.play(Animations.Enemy.STAND);
+        dragon.play(Animations.Enemy.STAND); // -- restart the dragon animation -- //
+        sleepSound.stop(); // -- stop the sleep sound -- //
     }
-}
+},
 
-//   Nemos KO Attack Collision with Enemies  //
+// -----------------------------------------------------------------------//
+// ----------------- This is where the nemo Ko's bees  -------------------//
+// -----------------------------------------------------------------------//
+beesNemoBubbles: function  (nemoBubbles, bee) {
+    // -- Play sounds -- //
+    enemyGetsHit.play();
+    sleepSound.play();
 
-function beesNemoBubbles (nemoBubbles, bee) {
-    nemoBubbles.kill();
+    nemoBubbles.kill(); // -- kill Nemos translucent bubble so no more collisions happen -- //
+
+    // -- play bee sleep animation for 5 seconds -- //
     bee.play(Animations.Enemy.SLEEP);
-
     game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
     function playSleepAnimation () {
-        bee.play(Animations.Enemy.STAND);
+        bee.play(Animations.Enemy.STAND); // -- restart the bee animation -- //
+        sleepSound.stop(); // -- stop the sleep sound -- //
     }
-}
+},
 
-
-function bubblesCollide (nemoBubbles, enemyBubbles) {
+// ---------------------------------------------------------------------------------//
+// ----------------- This is where the nemo attack kills bubbles -------------------//
+// ---------------------------------------------------------------------------------//
+bubblesCollide: function  (nemoBubbles, enemyBubbles) {
+    bubblePop.play(); // -- Play sound -- //
+    // -- kill bubbles -- //
     nemoBubbles.kill();
     enemyBubbles.kill();
-
-}
-
-
-//   Nemos KO bubble Collision with Gorilla   //
-
-function gorillaResolveNemoBubbles (gorilla, nemoBubbles) {
-    gorilla.play(Animations.Enemy.SLEEP);
-    gorilla.body.velocity = 0;
-    if (gorilla && gorilla.animations.currentAnim == Animations.Enemy.SLEEP) {
+},
 
 
-        game.time.events.add(Phaser.Timer.SECOND * 5, 10, playSleepAnimation, this);
-    }
-    function playSleepAnimation () {
+// ---------------------------------------------------------------------------------//
+// ----------------- Kill Nemo if he makes contact with enemies --------------------//
+// ---------------------------------------------------------------------------------//
+resolveEnemyCollision: function (nemo, enemies) {
+
+    nemoCollides = true; // -- Make nemo collision true -- //
+    music.stop(); // -- stop level music -- //
+    nemoDies.play(); // -- play death scene music -- //
+    nemo.play(Animations.Nemo.DIE); // -- play death animation -- //
+
+    // -- remove other possible collisions -- //
+    game.physics.arcade.checkCollision.down = false;
+    nemo.body.collideWorldBounds = false;
+    nemo.animations.currentAnim.onComplete.add(function () {
+        // -- kill nemo and restart the level -- //
+        nemo.kill();
+        this.restartLevel();
+    }, this);
+},
+
+// ---------------------------------------------------------------------------------//
+// ----------------- Kill Nemo if he makes contact with Dragons --------------------//
+// ---------------------------------------------------------------------------------//
+resolveDragonCollision: function (nemo, dragons) {
+    nemoCollides = true; // -- Make nemo collision true -- //
+    nemoDies.play(); // -- play death scene music -- //
+    music.stop(); // -- stop level music -- //
+    nemo.play(Animations.Nemo.DIE); // -- play death animation -- //
+
+    // -- remove other possible collisions -- //
+    game.physics.arcade.checkCollision.down = false;
+    nemo.body.collideWorldBounds = false;
+    nemo.animations.currentAnim.onComplete.add(function () {
+        // -- kill nemo and restart the level -- //
+        nemo.kill();
+        this.restartLevel();
+    }, this);
+},
+
+
+// ------------------------------------------------------------------------------//
+// ----------------- Kill Nemo if he makes contact with Bees --------------------//
+// ------------------------------------------------------------------------------//
+resolveBeeCollision: function (nemo, bees) {
+    nemoCollides = true;     // -- Make nemo collision true -- //
+    nemoDies.play();     // -- play death scene music -- //
+    music.stop();     // -- stop level music -- //
+    // -- play death animation -- //
+    nemo.play(Animations.Nemo.DIE);
+    // -- remove other possible collisions -- //
+    game.physics.arcade.checkCollision.down = false;
+    nemo.body.collideWorldBounds = false;
+    nemo.animations.currentAnim.onComplete.add(function () {
+        // -- kill nemo and restart the level -- //
+        nemo.kill();
+        this.restartLevel();
+    }, this);
+},
+
+// ------------------------------------------------------------------------------//
+// ---------------- Kill Nemo if he makes contact with Gorilla ------------------//
+// ------------------------------------------------------------------------------//
+
+    resolveGorillaCollision: function (gorilla, nemo) {
+        nemoCollides = true;// -- Make nemo collision true -- //
+        music.stop(); // -- stop level music -- //
+        nemoDies.play(); // -- play death scene music -- //
+
+        // -- stop Gorilla movement and Animation
+        gorilla.body.velocity = 0;
+        gorilla.play(Animations.Enemy.STILL);
+        nemo.play(Animations.Nemo.DIE);// -- play death animation -- //
+        
+        // -- remove other possible collisions -- //
+        game.physics.arcade.checkCollision.down = false;
+        nemo.body.collideWorldBounds = false;
+        nemo.animations.currentAnim.onComplete.add(function () {
+            // -- kill nemo and restart the level -- //
+            nemo.kill();
+            this.restartLevel();
+        }, this);
+    },
+
+// ------------------------------------------------------------------------------//
+// ---------------- Kill Nemo if he makes contact with Banana -------------------//
+// ------------------------------------------------------------------------------//
+
+
+    bananaCollide: function  (nemo, banana) {
+    nemoCollides = true; // -- Make nemo collision true -- //
+    music.stop(); // -- stop music -- //
+    nemoDies.play(); // -- play nemo die tune -- //
+    gorilla.body.velocity.x = 0; // -- stop gorilla from chasing you -- //
+    gorilla.play(Animations.Enemy.STILL); // -- make his animation still -- //
+    sleepSound.stop(); // -- if the Gorilla is Ko'ed, stop the sleep sound -- //
+    nemo.play(Animations.Nemo.DIE); // -- play Nemo die animation -- //
+
+    // -- turn banana body to null to stop multiple collisions -- //
+    banana.body = null;
+    game.physics.arcade.checkCollision.down = false;
+    nemo.body.collideWorldBounds = false;
+
+    // -- kill nemo and restart the level -- //
+    nemo.animations.currentAnim.onComplete.add(function () {
+        nemo.kill();
+        this.restartLevel();
+
+    }, this);
+},
+
+// ------------------------------------------------------------------------------//
+// -------------------- Goriila and Nemo's attack  Collision --------------------//
+// ------------------------------------------------------------------------------//
+
+
+    gorillaResolveNemoBubble: function  (boss, nemoBubbles) {
+        // -- Kill Nemo translucent attack bubble -- //
+        nemoBubbles.kill();
+        // -- play boss gets hit sound -- //
+        bossGetsHit.play();
+        gorillaSleeping = true;
+        sleepSound.play();
+        canHitGorilla = false;
+        // -- take away 1 HP for each time Gorilla is hit with cane -- //
+        gorillaHP --;
+        //--  play boss KO animation and stop his velocity -- //
+        boss.play(Animations.Enemy.SLEEP);
+        boss.body.velocity.x = 0;
+        // -- drop a banana everytime the gorilla gets hit -- //
+        banana = game.add.sprite(gorilla.x, gorilla.y + 9, 'banana');
+        game.physics.enable(banana, Phaser.Physics.ARCADE);
+        banana.body.allowGravity = false;
+        banana.body.immovable = true;
+        // -- add banana to a group -- //
+        bananas.add(banana);
+
+        // -- After 5 seconds make gorilla move again. -- //
+        game.time.events.add(Phaser.Timer.SECOND * 5, playSleepAnimation, this);
+        function playSleepAnimation () {
+            boss.play(Animations.Enemy.STAND);
+            gorillaSleeping = false;
+            canHitGorilla = true;
+            sleepSound.stop();
+        }
+    },
+
+
+// ------------------------------------------------------------------------------//
+// --------------------------  Gorilla Dies Function ----------------------------//
+// ------------------------------------------------------------------------------//
+
+    gorillaDies: function  () {
+        explosionPlayed = true;   // -- Check to make sure the explosion is playing -- //
+        sleepSound.stop();  // -- stop sleep sound if Gorilla is asleep -- //
+        music.stop(); // -- stop game music -- //
+        bossDies.play(); // -- play boss dies sound -- //
+        youWinSong.play();  // -- You win song -- //
+        explosion = game.add.sprite(gorilla.body.x -26, gorilla.body.y -32, 'explosion'); // -- add explosion for when Gorilla dies -- //
+        gorilla.destroy(); // -- destroy gorilla behind explosion -- //
+        game.physics.enable(explosion, Phaser.Physics.ARCADE); // -- Add Physics to the explosion sprite-- //
+        explosion.body.allowGravity = false;  // -- remove explosion gravity -- //
+        // -- Add, play, and time the explosion animation -- //
+        explosion.animations.add('death', null, 14);
+        explosion.animations.play('death');
+        setTimeout(function() {game.world.remove(explosion);}, 1000);
+
+        // ---Create a You win Image---//
+        youWinPhoto = game.add.image(0, 70, 'winBanner');
+        youWinPhoto.fixedToCamera = true;
+        youWinPhoto.scale.setTo(0.57,0.57);
+
+    },
+
+gorillaPath: function  () {
+        // -- If Nemo is below the gorilla, Gorilla doesnt move -- //
+    if (nemo.position.y <= 250 && gorillaSleeping === false) {
         gorilla.play(Animations.Enemy.STAND);
-    }
-
-}
-
-
-// Collision with Enemy Kills Nemo
-function resolveEnemyCollision(nemo, enemies) {
-            nemo.play(Animations.Nemo.DIE);
-            game.physics.arcade.checkCollision.down = false;
-            nemo.body.collideWorldBounds = false;
-            nemo.animations.currentAnim.onComplete.add(function () {
-                nemo.kill();
-           }, this);
-}
-
-
-function gorillaPath () {
-    if (nemo.position.y <= 250) {
-        gorilla.play(Animations.Enemy.STAND);
-
-        if (gorilla.position.x > nemo.position.x) {
-            if (gorilla.facing === 'right') {
-                gorilla.scale.x *= -1;
-                gorilla.body.velocity.x = -50;
-                gorilla.facing = 'left';
+        if (gorilla.position.x > nemo.position.x) { // -- if Gorilla is to the right of Nemo -- //
+            if (gorilla.facing === 'right') { // -- and Gorilla is facing right -- //
+                gorilla.scale.x *= -1; // -- reverse the sprite animation -- //
+                gorilla.body.velocity.x = -50; // -- start gorillas horizontal movement to the left -- //
+                gorilla.facing = 'left'; // -- and make Gorilla face left -- //
             }
             else {
                 gorilla.body.velocity.x = -50;
             }
         }
         else {
-            if (gorilla.facing === 'left') {
-                gorilla.scale.x *= -1;
-                gorilla.body.velocity.x = 50;
-                gorilla.facing = 'right';
+            if (gorilla.facing === 'left') { // -- if Gorilla is to the left of Nemo -- //
+                gorilla.scale.x *= -1;  // -- reverse the sprite animation -- //
+                gorilla.body.velocity.x = 50; // -- start gorillas horizontal movement to the right -- //
+                gorilla.facing = 'right'; // -- and make Gorilla face right -- //
             }
             else {
                 gorilla.body.velocity.x = 50;
             }
         }
 
-
     }
-}
-
+},
 
 //full screen when mouse is click on screen
-function gofull() {
+gofull: function () {
 
     if (game.scale.isFullScreen)
     {
@@ -740,5 +1059,39 @@ function gofull() {
     {
         game.scale.startFullScreen(false);
     }
+},
 
-}
+    restartLevel: function() {
+        // -- Create a fade to black transition before restarting. -- //
+        game.camera.fade(0x000000, Phaser.Timer.SECOND, false);
+        game.camera.onFadeComplete.addOnce(function() {
+
+            // -- restart state. -- //
+            game.state.start('main');
+            // -- stop all music and possible sounds -- //
+            music.stop();
+            sleepSound.stop();
+
+
+            // Reset variables.
+            canHitGorilla = true;
+            gorillaHP = 3;
+            explosionPlayed = false;
+            gorillaSleeping = false;
+            explosionPlayed = false;
+            nemoCollides = false;
+        });
+    }
+
+};
+
+// -- Add the 'mainState' and call it 'main' -- //
+game.state.add('main', mainState);
+
+// -- Start the state to actually start the game -- //
+game.state.start('main');
+
+
+
+
+
