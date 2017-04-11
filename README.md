@@ -5,6 +5,8 @@ The first leve was made with Phaser, a Javascript Library, and was made during m
 
 Controls: 
 
+Click the cursor anywhere on the screen to go full screen,
+
 Right Arrow Key = move right,
 
 Left Arrow Key = move left,
