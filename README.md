@@ -1,7 +1,7 @@
 # Nemo
 This is a remake of Little Nemo the Dream Master.
 It is a Level made with tiles from Super Mario World. Bottom to top platformer
-The first leve was made with Phaser, a Javascript Library, and was made during my 2nd term of my diploma.
+The first level was made with Phaser, a Javascript Library, and was made during my 2nd term of my diploma.
 
 Controls: 
 
