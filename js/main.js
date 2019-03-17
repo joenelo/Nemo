@@ -155,12 +155,12 @@ var mainState = {
     game.load.spritesheet('mole1', 'assets/leftMole.png', 30, 27);
     game.load.spritesheet('mole2', 'assets/mole.png', 30, 27);
     game.load.spritesheet('crusty', 'assets/leftCrusty.png', 28, 23);
-    game.load.spritesheet('crusty1', 'assets/Crusty.png', 28, 23);
-    game.load.spritesheet('crusty2', 'assets/Crusty.png', 28, 23);
+    game.load.spritesheet('crusty1', 'assets/crusty.png', 28, 23);
+    game.load.spritesheet('crusty2', 'assets/crusty.png', 28, 23);
     game.load.spritesheet('crusty3', 'assets/leftCrusty.png', 28, 23);
-    game.load.spritesheet('crusty4', 'assets/Crusty.png', 28, 23);
+    game.load.spritesheet('crusty4', 'assets/crusty.png', 28, 23);
     game.load.spritesheet('crusty5', 'assets/leftCrusty.png', 28, 23);
-    game.load.spritesheet('crusty6', 'assets/Crusty.png', 28, 23);
+    game.load.spritesheet('crusty6', 'assets/crusty.png', 28, 23);
     game.load.spritesheet('dragon', 'assets/leftDragon.png', 25, 30);
     game.load.spritesheet('dragon1', 'assets/Dragon.png', 25, 30);
     game.load.spritesheet('dragon2', 'assets/Dragon.png', 25, 30);
@@ -187,7 +187,7 @@ var mainState = {
     // -- Load sounds --//
     game.load.audio('jump', 'sounds/Jump.wav');
     game.load.audio('pop', 'sounds/BubblePop.mp3');
-    game.load.audio('sleep', 'sounds/KOSOund.mp3');
+    game.load.audio('sleep', 'sounds/KOSound.mp3');
     game.load.audio('music', 'sounds/NightSea.mp3');
     game.load.audio('enemyGetsHit', 'sounds/EnemyGetsHit.wav');
     game.load.audio('bossGetsHit', 'sounds/BossGetsHit.wav');
